@@ -39,7 +39,7 @@ var headerChannel = make(chan ksqldb.Header, 1)
 // var logger = log.New(f, "ksqldb-go ", log.LstdFlags)
 
 func Exec_ksql() {
-	var options = knet.Options{BaseUrl: "http://0.0.0.0:8088",
+	var options = knet.Options{BaseUrl: "http://10.140.0.3:8088",
 		AllowHTTP: true}
 	var kcl, _ = ksqldb.NewClientWithOptions(options)
 	defer kcl.Close()
@@ -71,7 +71,7 @@ type PaymentDetail struct {
 }
 
 var p, _ = kafka.NewProducer(&kafka.ConfigMap{
-	"bootstrap.servers": "localhost:9092",
+	"bootstrap.servers": "10.140.0.3:9092",
 	"acks":              "all"})
 var delivery_chan = make(chan kafka.Event, 10000)
 var topic = "Payment"

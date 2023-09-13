@@ -62,8 +62,13 @@ func (s *server) GetLock(ctx context.Context, payment *pb.Payment) (*pb.IsSucces
 func (s *server) Abort(ctx context.Context, PaymentID *pb.PaymentID) (*pb.IsSuccessful, error) {
 
 	paymentId := PaymentID.GetId()
-	p, _ := paymentMap.LoadAndDelete(paymentId)
+	p, loaded := paymentMap.LoadAndDelete(paymentId)
+	fmt.Println("b")
+	if(!loaded){
+		return &pb.IsSuccessful{Successful: true},nil
+	}
 	accountId := p.(myKafka.PaymentDetail).Id
+	fmt.Println(accountId)
 	accountEntries.delete(accountId)
 	fmt.Println("Abort")
 	return &pb.IsSuccessful{Successful: true}, nil

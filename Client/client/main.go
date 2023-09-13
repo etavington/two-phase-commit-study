@@ -24,7 +24,9 @@ func getLock(amount int64, transactionId uint64, data accountData, wg *sync.Wait
 		fmt.Println(err)
 	}
 	fmt.Println(data.serverIP, r.GetSuccessful())
-	*flag = r.GetSuccessful()
+	if(*flag == true){
+		*flag = r.GetSuccessful()
+	}
 }
 
 func send_transaction(sender accountData, receiver accountData, amount int64) {
@@ -48,9 +50,11 @@ func send_transaction(sender accountData, receiver accountData, amount int64) {
 	defer cancel2()
 
 	var senderTransactionId, receiverTransactionId uint64
+	rand.Seed(time.Now().UnixNano())
 	senderTransactionId = rand.Uint64()
 	if sender.serverIP == receiver.serverIP {
 		fmt.Println("same server")
+		rand.Seed(time.Now().UnixNano())
 		receiverTransactionId = rand.Uint64()
 	} else {
 		receiverTransactionId = senderTransactionId
