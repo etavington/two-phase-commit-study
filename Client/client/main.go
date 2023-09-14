@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	tr "Client/trans"
+
 	"google.golang.org/grpc"
 )
 
@@ -24,30 +26,29 @@ func getLock(amount int64, transactionId uint64, data accountData, wg *sync.Wait
 		fmt.Println(err)
 	}
 	fmt.Println(data.serverIP, r.GetSuccessful())
-	if(*flag == true){
+	if *flag == true {
 		*flag = r.GetSuccessful()
 	}
+}
+func callTransfer(client tr.TransactionClient, payment *tr.Payment) {
+	res, err := client.Transfer(context.Background(), payment)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(res.Reply)
 }
 
 func send_transaction(sender accountData, receiver accountData, amount int64) {
 	// setup sender grpc connection
-	conn1, err := grpc.Dial(sender.serverIP, grpc.WithInsecure())
-	if err != nil {
-		fmt.Println(err)
-	}
+	conn1, _ := grpc.Dial(sender.serverIP, grpc.WithInsecure())
 	defer conn1.Close()
 	c1 := pb.NewTwoPhaseCommitServerClient(conn1)
 	ctx1, cancel1 := context.WithTimeout(context.Background(), time.Second)
 	defer cancel1()
 	//setup receiver grpc connection
-	conn2, err := grpc.Dial(receiver.serverIP, grpc.WithInsecure())
-	if err != nil {
-		fmt.Println(err)
-	}
+	conn2, _ := grpc.Dial(receiver.serverIP, grpc.WithInsecure())
 	defer conn2.Close()
-	c2 := pb.NewTwoPhaseCommitServerClient(conn1)
-	ctx2, cancel2 := context.WithTimeout(context.Background(), time.Second)
-	defer cancel2()
+	c2 := tr.NewTransactionClient(conn2)
 
 	var senderTransactionId, receiverTransactionId uint64
 	rand.Seed(time.Now().UnixNano())
@@ -60,24 +61,23 @@ func send_transaction(sender accountData, receiver accountData, amount int64) {
 		receiverTransactionId = senderTransactionId
 	}
 	fmt.Println(senderTransactionId, receiverTransactionId)
-	fmt.Print(123)
 	flag := true
 	wg := sync.WaitGroup{}
 	wg.Add(2)
-	go getLock(-amount, senderTransactionId, sender, &wg, &flag, c1, ctx1)
-	go getLock(amount, receiverTransactionId, receiver, &wg, &flag, c2, ctx2)
+	go getLock(amount, senderTransactionId, sender, &wg, &flag, c1, ctx1)
+	p := &tr.Payment{
+		Giver:        "1",
+		GiverBank:    "bank1",
+		Receiver:     "2",
+		ReceiverBank: "bank2",
+		Amount:       int32(amount)}
+	go callTransfer(c2, p)
 	wg.Wait()
 	if flag {
 		a, _ := c1.Commit(ctx1, &pb.PaymentID{Id: senderTransactionId})
 		fmt.Println(a)
-		b, _ := c2.Commit(ctx2, &pb.PaymentID{Id: receiverTransactionId})
-		fmt.Println(b)
-	} else {
-		c1.Abort(ctx1, &pb.PaymentID{Id: senderTransactionId})
-		c2.Abort(ctx2, &pb.PaymentID{Id: receiverTransactionId})
 	}
-
 }
 func main() {
-	send_transaction(accountData{"localhost:50051", 1}, accountData{"localhost:50051", 2}, 1)
+	send_transaction(accountData{"104.199.211.126:50051", 1}, accountData{"35.194.168.145:50051", 2}, 1)
 }

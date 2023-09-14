@@ -64,8 +64,8 @@ func (s *server) Abort(ctx context.Context, PaymentID *pb.PaymentID) (*pb.IsSucc
 	paymentId := PaymentID.GetId()
 	p, loaded := paymentMap.LoadAndDelete(paymentId)
 	fmt.Println("b")
-	if(!loaded){
-		return &pb.IsSuccessful{Successful: true},nil
+	if !loaded {
+		return &pb.IsSuccessful{Successful: true}, nil
 	}
 	accountId := p.(myKafka.PaymentDetail).Id
 	fmt.Println(accountId)

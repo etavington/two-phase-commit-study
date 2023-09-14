@@ -1,0 +1,21 @@
+syntax ="proto3";
+
+package Transaction;
+
+option go_package=".";
+
+service Transaction{
+  rpc Transfer(Payment)returns(Reply);   
+}
+
+message Payment{
+   string giver =1;
+   string giver_bank =2;
+   string receiver =3;
+   string receiver_bank =4;
+   int32 amount =5;
+}
+
+message Reply{
+   string reply =1; 
+}
