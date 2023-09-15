@@ -18,7 +18,7 @@ type accountData struct {
 	accountID uint
 }
 
-func getLock(amount int64, transactionId uint64, data accountData, wg *sync.WaitGroup, flag *bool, c pb.TwoPhaseCommitServerClient, ctx context.Context) {
+func getLock(amount int64, transactionId uint64, data accountData, wg *sync.WaitGroup, c pb.TwoPhaseCommitServerClient, ctx context.Context) {
 	defer wg.Done()
 
 	r, err := c.GetLock(ctx, &pb.Payment{Id: transactionId, From: uint64(data.accountID), Amount: amount})
@@ -26,16 +26,14 @@ func getLock(amount int64, transactionId uint64, data accountData, wg *sync.Wait
 		fmt.Println(err)
 	}
 	fmt.Println(data.serverIP, r.GetSuccessful())
-	if *flag == true {
-		*flag = r.GetSuccessful()
-	}
 }
-func callTransfer(client tr.TransactionClient, payment *tr.Payment) {
+func callTransfer(client tr.TransactionClient, payment *tr.Payment, wg *sync.WaitGroup) {
+	defer wg.Done()
 	res, err := client.Transfer(context.Background(), payment)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(res.Reply)
+	fmt.Println(res)
 }
 
 func send_transaction(sender accountData, receiver accountData, amount int64) {
@@ -61,22 +59,19 @@ func send_transaction(sender accountData, receiver accountData, amount int64) {
 		receiverTransactionId = senderTransactionId
 	}
 	fmt.Println(senderTransactionId, receiverTransactionId)
-	flag := true
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-	go getLock(amount, senderTransactionId, sender, &wg, &flag, c1, ctx1)
 	p := &tr.Payment{
 		Giver:        "1",
 		GiverBank:    "bank1",
 		Receiver:     "2",
 		ReceiverBank: "bank2",
 		Amount:       int32(amount)}
-	go callTransfer(c2, p)
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	go getLock(amount, senderTransactionId, sender, &wg, c1, ctx1)
+	go callTransfer(c2, p, &wg)
 	wg.Wait()
-	if flag {
-		a, _ := c1.Commit(ctx1, &pb.PaymentID{Id: senderTransactionId})
-		fmt.Println(a)
-	}
+	a, _ := c1.Commit(ctx1, &pb.PaymentID{Id: senderTransactionId})
+	fmt.Println(a)
 }
 func main() {
 	send_transaction(accountData{"104.199.211.126:50051", 1}, accountData{"35.194.168.145:50051", 2}, 1)
