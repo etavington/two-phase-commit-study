@@ -67,12 +67,12 @@ func send_transaction(sender accountData, receiver accountData, amount int64) {
 		Amount:       int32(amount)}
 	wg := sync.WaitGroup{}
 	wg.Add(2)
-	go getLock(amount, senderTransactionId, sender, &wg, c1, ctx1)
+	go getLock(-amount, senderTransactionId, sender, &wg, c1, ctx1)
 	go callTransfer(c2, p, &wg)
 	wg.Wait()
 	a, _ := c1.Commit(ctx1, &pb.PaymentID{Id: senderTransactionId})
 	fmt.Println(a)
 }
 func main() {
-	send_transaction(accountData{"104.199.211.126:50051", 1}, accountData{"35.194.168.145:50051", 2}, 1)
+	send_transaction(accountData{"104.199.211.126:50051", 1}, accountData{"35.194.168.145:50051", 2}, 1000)
 }

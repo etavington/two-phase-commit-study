@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package grpc_2pc;
+
+option go_package = ".;two_phase_commit";
+
+service TwoPhaseCommitService {
+    rpc CreateAccount(CreateAccountRequest) returns (Response);
+    rpc DeleteAccount(DeleteAccountRequest) returns (Response);
+    rpc ReadAccount(ReadAccountRequest) returns (Response);
+    rpc UpdateAccount(UpdateAccountRequest) returns (Response);
+    rpc BeginTransaction(BeginTransactionRequest) returns (Response);
+    rpc Commit(CommitRequest) returns (Response);
+    rpc Abort(AbortRequest) returns (Response);
+    rpc Reset(ResetRequest) returns (Response);
+}
+
+message Response {
+    bool err = 1;
+    string msg = 2;
+}
+
+message CreateAccountRequest {
+    string server_ip = 1;
+    int64 account_id = 2;
+}
+
+message DeleteAccountRequest {
+    string server_ip = 1;
+    int64 account_id = 2;
+}
+
+message ReadAccountRequest {
+    string server_ip = 1;
+    int64 account_id = 2;
+}
+
+message UpdateAccountRequest {
+    string server_ip = 1;
+    int64 account_id = 2;
+    int64 amount = 3;
+}
+
+message BeginTransactionRequest {
+    string server_ip = 1;
+    int64 account_id = 2;
+    int64 amount = 3;
+    int64 transaction_id = 4;
+}
+
+message CommitRequest {
+    string server_ip = 1;
+    int64 account_id = 2;
+    int64 transaction_id = 3;
+}
+
+message AbortRequest {
+    string server_ip = 1;
+    int64 account_id = 2;
+    int64 transaction_id = 3;
+}
+
+message ResetRequest {
+    string server_ip = 1;
+}
+
+
