@@ -14,7 +14,8 @@ service TwoPhaseCommitService {
     rpc Abort(AbortRequest) returns (Response);
     rpc Reset(ResetRequest) returns (Response);
 }
-
+// if operation successed err is false and msg is "successed"
+// of err is true and msg is the cause
 message Response {
     bool err = 1;
     string msg = 2;
@@ -34,32 +35,32 @@ message ReadAccountRequest {
     string server_ip = 1;
     int64 account_id = 2;
 }
-
+// set account's balance to the amount and the amonunt must >= 0
 message UpdateAccountRequest {
     string server_ip = 1;
     int64 account_id = 2;
     int64 amount = 3;
 }
-
+// trasnsaction id and account id must be saved in grpc server
 message BeginTransactionRequest {
     string server_ip = 1;
     int64 account_id = 2;
     int64 amount = 3;
     int64 transaction_id = 4;
 }
-
+// do the saved operation and released saved ids 
 message CommitRequest {
     string server_ip = 1;
     int64 account_id = 2;
     int64 transaction_id = 3;
 }
-
+//do nothing but released saved ids
 message AbortRequest {
     string server_ip = 1;
     int64 account_id = 2;
     int64 transaction_id = 3;
 }
-
+//delete all db data
 message ResetRequest {
     string server_ip = 1;
 }
