@@ -17,10 +17,10 @@ type server struct {
 }
 
 func (s *server) createAccount(ctx context.Context, request *pb.CreateAccountRequest) (*pb.Response, error) {
-	server
+	account_id := request.GetAccountId()
 	fmt.Println("createAccount")
 	mykafka.SendPayment(int(account_id), 100)
-	return
+	return &pb.Response{Msg: "createdAccount"}, nil
 }
 
 func main() {

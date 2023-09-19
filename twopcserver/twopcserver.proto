@@ -1,7 +1,7 @@
 syntax = "proto3";
 import "google/protobuf/empty.proto";
 package twopcserver;
-
+option go_package = "Twopc-cli/twopcserver;twopcserver";
 service TwoPhaseCommitService {
     rpc CreateAccount(CreateAccountRequest) returns (Response);
     rpc DeleteAccount(DeleteAccountRequest) returns (Response);

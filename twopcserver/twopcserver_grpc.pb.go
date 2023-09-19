@@ -8,6 +8,7 @@ package twopcserver
 
 import (
 	context "context"
+	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -29,7 +30,7 @@ type TwoPhaseCommitServiceClient interface {
 	BeginTransaction(ctx context.Context, in *BeginTransactionRequest, opts ...grpc.CallOption) (*Response, error)
 	Commit(ctx context.Context, in *CommitRequest, opts ...grpc.CallOption) (*Response, error)
 	Abort(ctx context.Context, in *AbortRequest, opts ...grpc.CallOption) (*Response, error)
-	Reset(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*Response, error)
+	Reset(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Response, error)
 }
 
 type twoPhaseCommitServiceClient struct {
@@ -103,7 +104,7 @@ func (c *twoPhaseCommitServiceClient) Abort(ctx context.Context, in *AbortReques
 	return out, nil
 }
 
-func (c *twoPhaseCommitServiceClient) Reset(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*Response, error) {
+func (c *twoPhaseCommitServiceClient) Reset(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
 	err := c.cc.Invoke(ctx, "/twopcserver.TwoPhaseCommitService/Reset", in, out, opts...)
 	if err != nil {
@@ -123,7 +124,7 @@ type TwoPhaseCommitServiceServer interface {
 	BeginTransaction(context.Context, *BeginTransactionRequest) (*Response, error)
 	Commit(context.Context, *CommitRequest) (*Response, error)
 	Abort(context.Context, *AbortRequest) (*Response, error)
-	Reset(context.Context, *ResetRequest) (*Response, error)
+	Reset(context.Context, *empty.Empty) (*Response, error)
 	mustEmbedUnimplementedTwoPhaseCommitServiceServer()
 }
 
@@ -152,7 +153,7 @@ func (UnimplementedTwoPhaseCommitServiceServer) Commit(context.Context, *CommitR
 func (UnimplementedTwoPhaseCommitServiceServer) Abort(context.Context, *AbortRequest) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Abort not implemented")
 }
-func (UnimplementedTwoPhaseCommitServiceServer) Reset(context.Context, *ResetRequest) (*Response, error) {
+func (UnimplementedTwoPhaseCommitServiceServer) Reset(context.Context, *empty.Empty) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Reset not implemented")
 }
 func (UnimplementedTwoPhaseCommitServiceServer) mustEmbedUnimplementedTwoPhaseCommitServiceServer() {}
@@ -295,7 +296,7 @@ func _TwoPhaseCommitService_Abort_Handler(srv interface{}, ctx context.Context, 
 }
 
 func _TwoPhaseCommitService_Reset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ResetRequest)
+	in := new(empty.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -307,7 +308,7 @@ func _TwoPhaseCommitService_Reset_Handler(srv interface{}, ctx context.Context, 
 		FullMethod: "/twopcserver.TwoPhaseCommitService/Reset",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TwoPhaseCommitServiceServer).Reset(ctx, req.(*ResetRequest))
+		return srv.(TwoPhaseCommitServiceServer).Reset(ctx, req.(*empty.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
