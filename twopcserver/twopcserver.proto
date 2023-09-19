@@ -1,8 +1,6 @@
 syntax = "proto3";
-
-package grpc_2pc;
-
-option go_package = ".;two_phase_commit";
+import "google/protobuf/empty.proto";
+package twopcserver;
 
 service TwoPhaseCommitService {
     rpc CreateAccount(CreateAccountRequest) returns (Response);
@@ -12,59 +10,48 @@ service TwoPhaseCommitService {
     rpc BeginTransaction(BeginTransactionRequest) returns (Response);
     rpc Commit(CommitRequest) returns (Response);
     rpc Abort(AbortRequest) returns (Response);
-    rpc Reset(ResetRequest) returns (Response);
+    rpc Reset(google.protobuf.Empty) returns (Response);
 }
 // if operation successed err is false and msg is "successed"
 // of err is true and msg is the cause
 message Response {
-    bool err = 1;
-    string msg = 2;
+    string msg = 1;
 }
 // if account has been created, fail
 message CreateAccountRequest {
-    string server_ip = 1;
     int64 account_id = 2;
 }
 // if account does not exsist, fail
 message DeleteAccountRequest {
-    string server_ip = 1;
     int64 account_id = 2;
 }
 // if account does not exsist, fail
 message ReadAccountRequest {
-    string server_ip = 1;
     int64 account_id = 2;
 }
 // set account's balance to the amount and the amonunt must >= 0
 // if account does not exsist, fail
 message UpdateAccountRequest {
-    string server_ip = 1;
     int64 account_id = 2;
     int64 amount = 3;
 }
 // trasnsaction id and account id must be saved in grpc server
 //account balance must >= -amount
 message BeginTransactionRequest {
-    string server_ip = 1;
     int64 account_id = 2;
     int64 amount = 3;
     int64 transaction_id = 4;
 }
 // do the saved operation and released saved ids 
 message CommitRequest {
-    string server_ip = 1;
     int64 account_id = 2;
     int64 transaction_id = 3;
 }
 //do nothing but released saved ids
 message AbortRequest {
-    string server_ip = 1;
     int64 account_id = 2;
     int64 transaction_id = 3;
 }
-//delete all db data
-message ResetRequest {
-    string server_ip = 1;
-}
+
 
 

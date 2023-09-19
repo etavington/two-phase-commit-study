@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.12.4
-// source: two-phase-commit.proto
+// source: twopcserver.proto
 
-package two_phase_commit
+package twopcserver
 
 import (
 	context "context"
@@ -42,7 +42,7 @@ func NewTwoPhaseCommitServiceClient(cc grpc.ClientConnInterface) TwoPhaseCommitS
 
 func (c *twoPhaseCommitServiceClient) CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
-	err := c.cc.Invoke(ctx, "/grpc_2pc.TwoPhaseCommitService/CreateAccount", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/twopcserver.TwoPhaseCommitService/CreateAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (c *twoPhaseCommitServiceClient) CreateAccount(ctx context.Context, in *Cre
 
 func (c *twoPhaseCommitServiceClient) DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
-	err := c.cc.Invoke(ctx, "/grpc_2pc.TwoPhaseCommitService/DeleteAccount", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/twopcserver.TwoPhaseCommitService/DeleteAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (c *twoPhaseCommitServiceClient) DeleteAccount(ctx context.Context, in *Del
 
 func (c *twoPhaseCommitServiceClient) ReadAccount(ctx context.Context, in *ReadAccountRequest, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
-	err := c.cc.Invoke(ctx, "/grpc_2pc.TwoPhaseCommitService/ReadAccount", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/twopcserver.TwoPhaseCommitService/ReadAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (c *twoPhaseCommitServiceClient) ReadAccount(ctx context.Context, in *ReadA
 
 func (c *twoPhaseCommitServiceClient) UpdateAccount(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
-	err := c.cc.Invoke(ctx, "/grpc_2pc.TwoPhaseCommitService/UpdateAccount", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/twopcserver.TwoPhaseCommitService/UpdateAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (c *twoPhaseCommitServiceClient) UpdateAccount(ctx context.Context, in *Upd
 
 func (c *twoPhaseCommitServiceClient) BeginTransaction(ctx context.Context, in *BeginTransactionRequest, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
-	err := c.cc.Invoke(ctx, "/grpc_2pc.TwoPhaseCommitService/BeginTransaction", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/twopcserver.TwoPhaseCommitService/BeginTransaction", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (c *twoPhaseCommitServiceClient) BeginTransaction(ctx context.Context, in *
 
 func (c *twoPhaseCommitServiceClient) Commit(ctx context.Context, in *CommitRequest, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
-	err := c.cc.Invoke(ctx, "/grpc_2pc.TwoPhaseCommitService/Commit", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/twopcserver.TwoPhaseCommitService/Commit", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (c *twoPhaseCommitServiceClient) Commit(ctx context.Context, in *CommitRequ
 
 func (c *twoPhaseCommitServiceClient) Abort(ctx context.Context, in *AbortRequest, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
-	err := c.cc.Invoke(ctx, "/grpc_2pc.TwoPhaseCommitService/Abort", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/twopcserver.TwoPhaseCommitService/Abort", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (c *twoPhaseCommitServiceClient) Abort(ctx context.Context, in *AbortReques
 
 func (c *twoPhaseCommitServiceClient) Reset(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
-	err := c.cc.Invoke(ctx, "/grpc_2pc.TwoPhaseCommitService/Reset", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/twopcserver.TwoPhaseCommitService/Reset", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +178,7 @@ func _TwoPhaseCommitService_CreateAccount_Handler(srv interface{}, ctx context.C
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/grpc_2pc.TwoPhaseCommitService/CreateAccount",
+		FullMethod: "/twopcserver.TwoPhaseCommitService/CreateAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TwoPhaseCommitServiceServer).CreateAccount(ctx, req.(*CreateAccountRequest))
@@ -196,7 +196,7 @@ func _TwoPhaseCommitService_DeleteAccount_Handler(srv interface{}, ctx context.C
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/grpc_2pc.TwoPhaseCommitService/DeleteAccount",
+		FullMethod: "/twopcserver.TwoPhaseCommitService/DeleteAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TwoPhaseCommitServiceServer).DeleteAccount(ctx, req.(*DeleteAccountRequest))
@@ -214,7 +214,7 @@ func _TwoPhaseCommitService_ReadAccount_Handler(srv interface{}, ctx context.Con
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/grpc_2pc.TwoPhaseCommitService/ReadAccount",
+		FullMethod: "/twopcserver.TwoPhaseCommitService/ReadAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TwoPhaseCommitServiceServer).ReadAccount(ctx, req.(*ReadAccountRequest))
@@ -232,7 +232,7 @@ func _TwoPhaseCommitService_UpdateAccount_Handler(srv interface{}, ctx context.C
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/grpc_2pc.TwoPhaseCommitService/UpdateAccount",
+		FullMethod: "/twopcserver.TwoPhaseCommitService/UpdateAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TwoPhaseCommitServiceServer).UpdateAccount(ctx, req.(*UpdateAccountRequest))
@@ -250,7 +250,7 @@ func _TwoPhaseCommitService_BeginTransaction_Handler(srv interface{}, ctx contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/grpc_2pc.TwoPhaseCommitService/BeginTransaction",
+		FullMethod: "/twopcserver.TwoPhaseCommitService/BeginTransaction",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TwoPhaseCommitServiceServer).BeginTransaction(ctx, req.(*BeginTransactionRequest))
@@ -268,7 +268,7 @@ func _TwoPhaseCommitService_Commit_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/grpc_2pc.TwoPhaseCommitService/Commit",
+		FullMethod: "/twopcserver.TwoPhaseCommitService/Commit",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TwoPhaseCommitServiceServer).Commit(ctx, req.(*CommitRequest))
@@ -286,7 +286,7 @@ func _TwoPhaseCommitService_Abort_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/grpc_2pc.TwoPhaseCommitService/Abort",
+		FullMethod: "/twopcserver.TwoPhaseCommitService/Abort",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TwoPhaseCommitServiceServer).Abort(ctx, req.(*AbortRequest))
@@ -304,7 +304,7 @@ func _TwoPhaseCommitService_Reset_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/grpc_2pc.TwoPhaseCommitService/Reset",
+		FullMethod: "/twopcserver.TwoPhaseCommitService/Reset",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TwoPhaseCommitServiceServer).Reset(ctx, req.(*ResetRequest))
@@ -316,7 +316,7 @@ func _TwoPhaseCommitService_Reset_Handler(srv interface{}, ctx context.Context, 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TwoPhaseCommitService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "grpc_2pc.TwoPhaseCommitService",
+	ServiceName: "twopcserver.TwoPhaseCommitService",
 	HandlerType: (*TwoPhaseCommitServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -353,5 +353,5 @@ var TwoPhaseCommitService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "two-phase-commit.proto",
+	Metadata: "twopcserver.proto",
 }
