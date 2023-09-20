@@ -44,6 +44,10 @@ func (s *server) ReadAccount(ctx context.Context, request *pb.ReadAccountRequest
 func (s *server) UpdateAccountRequest(ctx context.Context, request *pb.UpdateAccountRequest) (*pb.Response, error) {
 	account_id := int(request.GetAccountId())
 	amount := int(request.GetAmount())
+	if amount < 0 {
+		fmt.Println("Amount should be positive")
+		return nil, errors.New("amount should be positive")
+	}
 	balance, ok := mykafka.QueryAccount(account_id)
 	if ok {
 		delta := -int(balance) + amount
