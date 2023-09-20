@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -16,11 +17,42 @@ type server struct {
 	pb.UnimplementedTwoPhaseCommitServiceServer
 }
 
-func (s *server) createAccount(ctx context.Context, request *pb.CreateAccountRequest) (*pb.Response, error) {
-	account_id := request.GetAccountId()
-	fmt.Println("createAccount")
-	mykafka.SendPayment(int(account_id), 100)
-	return &pb.Response{Msg: "createdAccount"}, nil
+func (s *server) CreateAccount(ctx context.Context, request *pb.CreateAccountRequest) (*pb.Response, error) {
+	account_id := int(request.GetAccountId())
+	_, ok := mykafka.QueryAccount(account_id)
+	if ok {
+		fmt.Println("Account already exists")
+		return nil, errors.New("account already exists")
+	} else {
+		mykafka.SendPayment(account_id, 100)
+		return &pb.Response{Msg: "create account successfully"}, nil
+	}
+}
+func (s *server) ReadAccount(ctx context.Context, request *pb.ReadAccountRequest) (*pb.Response, error) {
+	account_id := int(request.GetAccountId())
+	balance, ok := mykafka.QueryAccount(account_id)
+	if ok {
+		fstr := fmt.Sprintf("%d's balance is %d\n", account_id, balance)
+		fmt.Println(fstr)
+		return &pb.Response{Msg: fstr}, nil
+	} else {
+		fmt.Println("Account doesn't exist")
+		return nil, errors.New("create account successfully")
+	}
+}
+
+func (s *server) UpdateAccountRequest(ctx context.Context, request *pb.UpdateAccountRequest) (*pb.Response, error) {
+	account_id := int(request.GetAccountId())
+	amount := int(request.GetAmount())
+	balance, ok := mykafka.QueryAccount(account_id)
+	if ok {
+		delta := -int(balance) + amount
+		mykafka.SendPayment(account_id, delta)
+		return &pb.Response{Msg: "update account successfully"}, nil
+	} else {
+		fmt.Println("Account doesn't exist")
+		return nil, errors.New("account doesn't exist")
+	}
 }
 
 func main() {

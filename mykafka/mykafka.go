@@ -18,10 +18,11 @@ type SafeMap struct {
 	Map map[uint64]int64
 }
 
-func (sm *SafeMap) Get(key uint64) int64 {
+func (sm *SafeMap) Get(key uint64) (int64, bool) {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
-	return sm.Map[key]
+	v, ok := sm.Map[key]
+	return v, ok
 }
 
 func (sm *SafeMap) Set(key uint64, value int64) {
@@ -85,6 +86,10 @@ func SendPayment(from int, amount int) {
 		Value:          []byte(b)},
 		delivery_chan,
 	)
+}
+func QueryAccount(id int) (int64, bool) {
+	v, ok := Records.Get(uint64(id))
+	return v, ok
 }
 func ReceiveKafkaCallback() {
 	for e := range delivery_chan {
