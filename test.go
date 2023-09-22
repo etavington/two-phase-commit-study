@@ -53,6 +53,7 @@ func (s *server) UpdateAccount(ctx context.Context, request *pb.UpdateAccountReq
 	balance, ok := mykafka.QueryAccount(account_id)
 	if ok {
 		delta := -int(balance) + amount
+		fmt.Println(delta)
 		mykafka.SendPayment(account_id, delta)
 		return &pb.Response{Msg: "update account successfully"}, nil
 	} else {
@@ -67,11 +68,13 @@ func (s *server) DeleteAccount(ctx context.Context, request *pb.DeleteAccountReq
 	if ok {
 		err := mykafka.DeleteAccount(account_id, int(balance))
 		if err != nil {
-			return &pb.Response{Msg: "delete account successfully"}, nil
-		} else {
+			fmt.Println(err)
 			return nil, err
+		} else {
+			return &pb.Response{Msg: "delete account successfully"}, nil
 		}
 	}
+	fmt.Println("Account doesn't exist")
 	return nil, errors.New("account doesn't exist")
 }
 
@@ -97,6 +100,7 @@ func (s *server) BeginTransaction(ctx context.Context, request *pb.BeginTransact
 		fmt.Println(err)
 		return nil, err
 	}
+	fmt.Println("begin transaction successfully")
 	return &pb.Response{Msg: "begin transaction successfully"}, nil
 }
 
@@ -108,6 +112,7 @@ func (s *server) Commit(ctx context.Context, request *pb.CommitRequest) (*pb.Res
 		return nil, err
 	}
 	if len(delta) == 1 {
+		fmt.Print("commit successfully")
 		mykafka.SendPayment(delta[0].AccountId, delta[0].Amount)
 	} else {
 		mykafka.SendPayment(delta[0].AccountId, delta[0].Amount)
@@ -140,6 +145,7 @@ func main() {
 	}
 	s := grpc.NewServer()
 	go mykafka.Push_query()
+	go mykafka.Modify_map()
 	pb.RegisterTwoPhaseCommitServiceServer(s, &server{})
 	fmt.Printf("Server is running on port %v\n", lis.Addr())
 	if err := s.Serve(lis); err != nil {
