@@ -1,25 +1,22 @@
-package main
+package grpc
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
-	"net"
 
 	"Twopc-cli/container"
 	"Twopc-cli/mykafka"
 	pb "Twopc-cli/twopcserver"
 
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type server struct {
+type Server struct {
 	pb.UnimplementedTwoPhaseCommitServiceServer
 }
 
-func (s *server) CreateAccount(ctx context.Context, request *pb.CreateAccountRequest) (*pb.Response, error) {
+func (s *Server) CreateAccount(ctx context.Context, request *pb.CreateAccountRequest) (*pb.Response, error) {
 	account_id := int(request.GetAccountId())
 	_, ok := mykafka.QueryAccount(account_id)
 	if ok {
@@ -30,7 +27,7 @@ func (s *server) CreateAccount(ctx context.Context, request *pb.CreateAccountReq
 		return &pb.Response{Msg: "create account successfully"}, nil
 	}
 }
-func (s *server) ReadAccount(ctx context.Context, request *pb.ReadAccountRequest) (*pb.Response, error) {
+func (s *Server) ReadAccount(ctx context.Context, request *pb.ReadAccountRequest) (*pb.Response, error) {
 	account_id := int(request.GetAccountId())
 	balance, ok := mykafka.QueryAccount(account_id)
 	if ok {
@@ -43,7 +40,7 @@ func (s *server) ReadAccount(ctx context.Context, request *pb.ReadAccountRequest
 	}
 }
 
-func (s *server) UpdateAccount(ctx context.Context, request *pb.UpdateAccountRequest) (*pb.Response, error) {
+func (s *Server) UpdateAccount(ctx context.Context, request *pb.UpdateAccountRequest) (*pb.Response, error) {
 	account_id := int(request.GetAccountId())
 	amount := int(request.GetAmount())
 	if amount < 0 {
@@ -62,7 +59,7 @@ func (s *server) UpdateAccount(ctx context.Context, request *pb.UpdateAccountReq
 	}
 }
 
-func (s *server) DeleteAccount(ctx context.Context, request *pb.DeleteAccountRequest) (*pb.Response, error) {
+func (s *Server) DeleteAccount(ctx context.Context, request *pb.DeleteAccountRequest) (*pb.Response, error) {
 	account_id := int(request.GetAccountId())
 	balance, ok := mykafka.QueryAccount(account_id)
 	if ok {
@@ -80,7 +77,7 @@ func (s *server) DeleteAccount(ctx context.Context, request *pb.DeleteAccountReq
 
 var txnTableGet, txnTableSet, txnTableDel = container.New2PCTxnTableAccessors()
 
-func (s *server) BeginTransaction(ctx context.Context, request *pb.BeginTransactionRequest) (*pb.Response, error) {
+func (s *Server) BeginTransaction(ctx context.Context, request *pb.BeginTransactionRequest) (*pb.Response, error) {
 	transaction_id := uint(request.GetTransactionId())
 	amount := int(request.GetAmount())
 	account_id := int(request.GetAccountId())
@@ -104,7 +101,7 @@ func (s *server) BeginTransaction(ctx context.Context, request *pb.BeginTransact
 	return &pb.Response{Msg: "begin transaction successfully"}, nil
 }
 
-func (s *server) Commit(ctx context.Context, request *pb.CommitRequest) (*pb.Response, error) {
+func (s *Server) Commit(ctx context.Context, request *pb.CommitRequest) (*pb.Response, error) {
 	transaction_id := uint(request.GetTransactionId())
 	delta, err := txnTableGet(transaction_id)
 	if err != nil {
@@ -121,13 +118,13 @@ func (s *server) Commit(ctx context.Context, request *pb.CommitRequest) (*pb.Res
 	txnTableDel(transaction_id)
 	return &pb.Response{Msg: "commit successfully"}, nil
 }
-func (s *server) Abort(ctx context.Context, request *pb.AbortRequest) (*pb.Response, error) {
+func (s *Server) Abort(ctx context.Context, request *pb.AbortRequest) (*pb.Response, error) {
 	transaction_id := uint(request.GetTransactionId())
 	txnTableDel(transaction_id)
 	return &pb.Response{Msg: "abort successfully"}, nil
 }
 
-func (s *server) Reset(ctx context.Context, e *emptypb.Empty) (*pb.Response, error) {
+func (s *Server) Reset(ctx context.Context, e *emptypb.Empty) (*pb.Response, error) {
 	ids := make([]uint64, 0, len(mykafka.Records.Map))
 	for k := range mykafka.Records.Map {
 		ids = append(ids, k)
@@ -136,20 +133,4 @@ func (s *server) Reset(ctx context.Context, e *emptypb.Empty) (*pb.Response, err
 		mykafka.DeleteAccount(int(id), int(mykafka.Records.Map[id]))
 	}
 	return &pb.Response{Msg: "reset successfully"}, nil
-}
-
-func main() {
-	lis, err := net.Listen("tcp", ":50051")
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-	s := grpc.NewServer()
-	go mykafka.Push_query()
-	go mykafka.Modify_map()
-	pb.RegisterTwoPhaseCommitServiceServer(s, &server{})
-	fmt.Printf("Server is running on port %v\n", lis.Addr())
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-		fmt.Println(err)
-	}
 }
