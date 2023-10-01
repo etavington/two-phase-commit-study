@@ -2,26 +2,24 @@ package mykafka
 
 import (
 	"context"
-	"fmt"
 	"time"
+
+	safe "Twopc-cli/container"
+	log "Twopc-cli/logger"
 
 	"github.com/thmeitz/ksqldb-go"
 	knet "github.com/thmeitz/ksqldb-go/net"
-
-	safe "Twopc-cli/container"
 )
 
-var ksqlUrl = "http://localhost:8088"
+var ksqlUrl = "http://10.140.0.3:8088"
 
 var Records = safe.SafeMap{Map: make(map[uint64]int64)}
 
 var rowChannel = make(chan ksqldb.Row)
 var headerChannel = make(chan ksqldb.Header, 1)
 
-// var f, _ = os.OpenFile("golog.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-// var logger = log.New(f, "ksqldb-go ", log.LstdFlags)
-
 func Push_query() {
+	log.Logger.Println("Push_query(): start push query")
 	var options = knet.Options{BaseUrl: ksqlUrl,
 		AllowHTTP: true}
 	var kcl, _ = ksqldb.NewClientWithOptions(options)
@@ -31,23 +29,25 @@ func Push_query() {
 	defer cancel()
 	e := kcl.Push(ctx, ksqldb.QueryOptions{Sql: query}, rowChannel, headerChannel)
 	if e != nil {
-		fmt.Println(e)
+		log.Logger.Println("Push_query(): error", e)
 	}
 
 }
 
 func Modify_map() {
+	log.Logger.Println("Modify_map(): start modify map")
 	for row := range rowChannel {
+		log.Logger.Println("Modify_map(): receive rows", row)
 		if row != nil {
 			var id = uint64(row[0].(float64))
 			if row[1] == nil {
-				fmt.Println(id, "deleted")
+				log.Logger.Println("Modify_map(): deleted", id)
 				Records.Delete(uint64(id))
 				continue
 			}
 			var balance = int64(row[1].(float64))
 			Records.Set(id, balance)
-			fmt.Println(id, balance)
+			log.Logger.Println("Modify_map(): update map", Records.Map)
 		}
 	}
 
@@ -61,46 +61,43 @@ func SendPayment(from int, amount int) error {
 
 	stmt, err := ksqldb.QueryBuilder("INSERT INTO PAYMENT VALUES(?,?);", from, amount)
 	if err != nil {
-		fmt.Println(err)
+		log.Logger.Println("SendPaymenta() ksqldb.QueryBuilder: error", err)
 		return err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 	resp, err := ksqlcon.Execute(ctx, ksqldb.ExecOptions{KSql: *stmt})
 	if err != nil {
-		fmt.Println(err)
+		log.Logger.Println("SendPaymenta() ksqlcon.Execute: error ", err)
 		return err
 	}
-	fmt.Println(resp)
+	log.Logger.Println("SendPayment(): response", resp)
 	return nil
 }
 
 func DeleteAccount(id int, balance int) error {
 	err := SendPayment(id, -balance)
 	if err != nil {
-		fmt.Println(err)
+		log.Logger.Println("DeleteAccount SendPayment: ", err)
 		return err
 	}
 	stmt, err := ksqldb.QueryBuilder("INSERT INTO BALANCE VALUES(?,null);", id)
 	if err != nil {
-		fmt.Println(err)
+		log.Logger.Println("DeleteAccount ksqldb.QueryBuilder: ", err)
 		return err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 	resp, err := ksqlcon.Execute(ctx, ksqldb.ExecOptions{KSql: *stmt})
 	if err != nil {
-		fmt.Println(err)
+		log.Logger.Println("DeleteAccount ksqlcon.Execute: ", err)
 		return err
 	}
-	fmt.Println(resp)
+	log.Logger.Println("DeleteAccount respones: ", resp)
 	return nil
 }
 
 func QueryAccount(id int) (int64, bool) {
 	v, ok := Records.Get(uint64(id))
-	if v == 0 {
-		return 0, false
-	}
 	return v, ok
 }
