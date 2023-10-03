@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"Twopc-cli/container"
 	log "Twopc-cli/logger"
@@ -25,7 +26,17 @@ func (s *Server) CreateAccount(ctx context.Context, request *pb.CreateAccountReq
 		log.Logger.Println("CreateAccount() ", "account_id", account_id, ": Account already exists")
 		return nil, errors.New("account already exists")
 	} else {
-		mykafka.SendPayment(account_id, 100)
+		mykafka.SendPayment(account_id, 0)
+		var v int64
+		var ok bool
+		for {
+			time.Sleep(1 * time.Second)
+			v, ok = mykafka.QueryAccount(account_id)
+			if ok {
+				break
+			}
+		}
+		mykafka.SendPayment(account_id, 100-int(v))
 		log.Logger.Println("CreateAccount() ", "account_id", account_id, ": create account successfully")
 		return &pb.Response{Msg: "create account successfully"}, nil
 	}

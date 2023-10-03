@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"runtime"
 
 	mygrpc "Twopc-cli/grpc"
 	"Twopc-cli/mykafka"
@@ -13,6 +14,8 @@ import (
 )
 
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	fmt.Println(runtime.NumCPU())
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

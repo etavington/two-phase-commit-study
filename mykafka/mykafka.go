@@ -2,7 +2,6 @@ package mykafka
 
 import (
 	"context"
-	"time"
 
 	safe "Twopc-cli/container"
 	log "Twopc-cli/logger"
@@ -25,8 +24,7 @@ func Push_query() {
 	var kcl, _ = ksqldb.NewClientWithOptions(options)
 	defer kcl.Close()
 	var query = "SELECT * FROM BALANCE EMIT CHANGES;"
-	ctx, cancel := context.WithTimeout(context.TODO(), 180*time.Second)
-	defer cancel()
+	ctx := context.TODO()
 	e := kcl.Push(ctx, ksqldb.QueryOptions{Sql: query}, rowChannel, headerChannel)
 	if e != nil {
 		log.Logger.Println("Push_query(): error", e)
@@ -64,8 +62,7 @@ func SendPayment(from int, amount int) error {
 		log.Logger.Println("SendPaymenta() ksqldb.QueryBuilder: error", err)
 		return err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
-	defer cancel()
+	ctx := context.TODO()
 	resp, err := ksqlcon.Execute(ctx, ksqldb.ExecOptions{KSql: *stmt})
 	if err != nil {
 		log.Logger.Println("SendPaymenta() ksqlcon.Execute: error ", err)
@@ -76,18 +73,12 @@ func SendPayment(from int, amount int) error {
 }
 
 func DeleteAccount(id int, balance int) error {
-	err := SendPayment(id, -balance)
-	if err != nil {
-		log.Logger.Println("DeleteAccount SendPayment: ", err)
-		return err
-	}
 	stmt, err := ksqldb.QueryBuilder("INSERT INTO BALANCE VALUES(?,null);", id)
 	if err != nil {
 		log.Logger.Println("DeleteAccount ksqldb.QueryBuilder: ", err)
 		return err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
-	defer cancel()
+	ctx := context.TODO()
 	resp, err := ksqlcon.Execute(ctx, ksqldb.ExecOptions{KSql: *stmt})
 	if err != nil {
 		log.Logger.Println("DeleteAccount ksqlcon.Execute: ", err)
