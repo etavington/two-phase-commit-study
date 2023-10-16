@@ -19,38 +19,36 @@ message Response {
 }
 // if account has been created, fail
 message CreateAccountRequest {
-    int64 account_id = 2;
+    int account_id = 2;
 }
 // if account does not exsist, fail
 message DeleteAccountRequest {
-    int64 account_id = 2;
+    int account_id = 2;
 }
 // if account does not exsist, fail
 message ReadAccountRequest {
-    int64 account_id = 2;
+    int account_id = 2;
 }
 // set account's balance to the amount and the amonunt must >= 0
 // if account does not exsist, fail
 message UpdateAccountRequest {
-    int64 account_id = 2;
-    int64 amount = 3;
+    int account_id = 2;
+    int amount = 3;
 }
 // trasnsaction id and account id must be saved in grpc server
 //account balance must >= -amount
 message BeginTransactionRequest {
-    int64 account_id = 2;
-    int64 amount = 3;
-    int64 transaction_id = 4;
+    int account_id = 2;
+    int amount = 3;
 }
 // do the saved operation and released saved ids 
 message CommitRequest {
-    int64 account_id = 2;
-    int64 transaction_id = 3;
+    int account_id = 2;
+    int amount = 3;
 }
 //do nothing but released saved ids
 message AbortRequest {
-    int64 account_id = 2;
-    int64 transaction_id = 3;
+    int account_id = 2;
 }
 
 
