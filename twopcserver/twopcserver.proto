@@ -35,18 +35,19 @@ message UpdateAccountRequest {
     int account_id = 2;
     int amount = 3;
 }
-// trasnsaction id and account id must be saved in grpc server
 //account balance must >= -amount
+//if account does not exsist, fail
+//if there is lock in 2pc, we must save locks in server
 message BeginTransactionRequest {
     int account_id = 2;
     int amount = 3;
 }
-// do the saved operation and released saved ids 
+// do the saved operation and released locked account
 message CommitRequest {
     int account_id = 2;
     int amount = 3;
 }
-//do nothing but released saved ids
+//do nothing but released locked accoount
 message AbortRequest {
     int account_id = 2;
 }
