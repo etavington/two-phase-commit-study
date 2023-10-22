@@ -2,9 +2,11 @@ package mykafka
 
 import (
 	"context"
+	"fmt"
 
 	safe "Twopc-cli/container"
 	log "Twopc-cli/logger"
+	"sync"
 
 	"github.com/thmeitz/ksqldb-go"
 	knet "github.com/thmeitz/ksqldb-go/net"
@@ -52,9 +54,23 @@ func Modify_map() {
 
 }
 
+type dbLock struct {
+	mu  sync.Mutex
+	con ksqldb.KsqldbClient
+}
+
+func (db *dbLock) Execute(ctx context.Context, options ksqldb.ExecOptions) (*ksqldb.KsqlResponseSlice, error) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	fmt.Println(123)
+	res, err := db.con.Execute(ctx, options)
+	return res, err
+}
+
 var op = knet.Options{BaseUrl: ksqlUrl,
 	AllowHTTP: true}
-var ksqlcon, _ = ksqldb.NewClientWithOptions(op)
+var con, _ = ksqldb.NewClientWithOptions(op)
+var ksqlcon = dbLock{con: con}
 
 func SendPayment(from int, amount int) error {
 
