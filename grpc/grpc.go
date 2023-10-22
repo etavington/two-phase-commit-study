@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"Twopc-cli/container"
 	log "Twopc-cli/logger"
 	"Twopc-cli/mykafka"
 	pb "Twopc-cli/twopcserver"
@@ -27,7 +26,7 @@ func (s *Server) CreateAccount(ctx context.Context, request *pb.CreateAccountReq
 		return nil, errors.New("account already exists")
 	} else {
 		mykafka.SendPayment(account_id, 0)
-		var v int64
+		var v int32
 		var ok bool
 		for {
 			time.Sleep(1 * time.Second)
@@ -94,65 +93,46 @@ func (s *Server) DeleteAccount(ctx context.Context, request *pb.DeleteAccountReq
 	return nil, errors.New("account doesn't exist")
 }
 
-var txnTableGet, txnTableSet, txnTableDel = container.New2PCTxnTableAccessors()
-
 func (s *Server) BeginTransaction(ctx context.Context, request *pb.BeginTransactionRequest) (*pb.Response, error) {
-	transaction_id := uint(request.GetTransactionId())
-	log.Logger.Println("BeginTransaction()", "transaction_id", transaction_id, ": start begin transaction")
+	log.Logger.Println("BeginTransaction(): start begin transaction")
 	amount := int(request.GetAmount())
 	account_id := int(request.GetAccountId())
 
 	v, ok := mykafka.QueryAccount(account_id)
 	if !ok {
-		log.Logger.Println("BeginTransaction()", "transaction_id", transaction_id, ": Account doesn't exist")
+		log.Logger.Println("BeginTransaction(): Account doesn't exist")
 		return nil, errors.New("account doesn't exist")
-	} else if v < -int64(amount) {
-		log.Logger.Println("BeginTransaction()", "transaction_id", transaction_id, ": Not enough money")
+	} else if v < -int32(amount) {
+		log.Logger.Println("BeginTransaction(): Not enough money")
 		return nil, errors.New("not enough money")
 	}
 
-	delta := container.UserAccountChange{AccountId: account_id, Amount: amount}
-	err := txnTableSet(transaction_id, delta)
-	if err != nil {
-		log.Logger.Println("BeginTransaction()", "transaction_id", transaction_id, ":", err)
-		return nil, err
-	}
-	log.Logger.Println("BeginTransaction()", "transaction_id", transaction_id, ": begin transaction successfully")
+	log.Logger.Println("BeginTransaction(): begin transaction successfully")
 	return &pb.Response{Msg: "begin transaction successfully"}, nil
 }
 
 func (s *Server) Commit(ctx context.Context, request *pb.CommitRequest) (*pb.Response, error) {
-	transaction_id := uint(request.GetTransactionId())
-	log.Logger.Println("Commit()", "transaction_id", transaction_id, ": start commit")
-	delta, err := txnTableGet(transaction_id)
+	log.Logger.Println("Commit(): start commit")
+	amount := int(request.GetAmount())
+	account_id := int(request.GetAccountId())
+	err := mykafka.SendPayment(account_id, amount)
 	if err != nil {
-		log.Logger.Println("Commit()", "transaction_id", transaction_id, ":", err)
+		log.Logger.Println("Commit(): ", err)
 		return nil, err
 	}
-
-	log.Logger.Print("Commit()", "transaction_id", transaction_id, ": send payment")
-	if len(delta) == 1 {
-		mykafka.SendPayment(delta[0].AccountId, delta[0].Amount)
-	} else {
-		mykafka.SendPayment(delta[0].AccountId, delta[0].Amount)
-		mykafka.SendPayment(delta[1].AccountId, delta[1].Amount)
-	}
-	log.Logger.Print("Commit()", "transaction_id", transaction_id, ": commit successfully")
-	txnTableDel(transaction_id)
+	log.Logger.Print("Commit(): commit successfully")
 
 	return &pb.Response{Msg: "commit successfully"}, nil
 }
 func (s *Server) Abort(ctx context.Context, request *pb.AbortRequest) (*pb.Response, error) {
-	transaction_id := uint(request.GetTransactionId())
-	log.Logger.Println("Abort()", "transaction_id", transaction_id, ": start abort")
-	txnTableDel(transaction_id)
-	log.Logger.Println("Abort()", "transaction_id", transaction_id, ": abort successfully")
+	log.Logger.Println("Abort(): start abort")
+	log.Logger.Println("Abort(): abort successfully")
 	return &pb.Response{Msg: "abort successfully"}, nil
 }
 
 func (s *Server) Reset(ctx context.Context, e *emptypb.Empty) (*pb.Response, error) {
 	log.Logger.Println("Reset(): start reset")
-	ids := make([]uint64, 0, len(mykafka.Records.Map))
+	ids := make([]int32, 0, len(mykafka.Records.Map))
 	for k := range mykafka.Records.Map {
 		ids = append(ids, k)
 	}

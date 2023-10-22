@@ -10,15 +10,14 @@ import (
 	knet "github.com/thmeitz/ksqldb-go/net"
 )
 
-var ksqlUrl = "http://10.140.0.3:8088"
+var ksqlUrl = "http://10.140.0.4:8088"
 
-var Records = safe.SafeMap{Map: make(map[uint64]int64)}
+var Records = safe.SafeMap{Map: make(map[int32]int32)}
 
 var rowChannel = make(chan ksqldb.Row)
 var headerChannel = make(chan ksqldb.Header, 1)
 
 func Push_query() {
-	log.Logger.Println("Push_query(): start push query")
 	var options = knet.Options{BaseUrl: ksqlUrl,
 		AllowHTTP: true}
 	var kcl, _ = ksqldb.NewClientWithOptions(options)
@@ -28,6 +27,8 @@ func Push_query() {
 	e := kcl.Push(ctx, ksqldb.QueryOptions{Sql: query}, rowChannel, headerChannel)
 	if e != nil {
 		log.Logger.Println("Push_query(): error", e)
+	} else {
+		log.Logger.Println("Push_query(): start push query")
 	}
 
 }
@@ -37,13 +38,13 @@ func Modify_map() {
 	for row := range rowChannel {
 		log.Logger.Println("Modify_map(): receive rows", row)
 		if row != nil {
-			var id = uint64(row[0].(float64))
+			var id = int32(row[0].(float64))
 			if row[1] == nil {
 				log.Logger.Println("Modify_map(): deleted", id)
-				Records.Delete(uint64(id))
+				Records.Delete(int32(id))
 				continue
 			}
-			var balance = int64(row[1].(float64))
+			var balance = int32(row[1].(float64))
 			Records.Set(id, balance)
 			log.Logger.Println("Modify_map(): update map", Records.Map)
 		}
@@ -88,7 +89,7 @@ func DeleteAccount(id int, balance int) error {
 	return nil
 }
 
-func QueryAccount(id int) (int64, bool) {
-	v, ok := Records.Get(uint64(id))
+func QueryAccount(id int) (int32, bool) {
+	v, ok := Records.Get(int32(id))
 	return v, ok
 }
