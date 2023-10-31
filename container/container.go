@@ -31,3 +31,8 @@ func (sm *SafeMap) Delete(key int32) {
 	delete(sm.Map, key)
 	log.Logger.Println("Delete(): ", sm.Map)
 }
+func (sm *SafeMap) Add(key int32, delta int32) {
+	sm.mu.RLock()
+	defer sm.mu.RUnlock()
+	sm.Map[key] += delta
+}

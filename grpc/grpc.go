@@ -97,7 +97,6 @@ func (s *Server) BeginTransaction(ctx context.Context, request *pb.BeginTransact
 	log.Logger.Println("BeginTransaction(): start begin transaction")
 	amount := int(request.GetAmount())
 	account_id := int(request.GetAccountId())
-
 	v, ok := mykafka.QueryAccount(account_id)
 	if !ok {
 		log.Logger.Println("BeginTransaction(): Account doesn't exist")
@@ -112,6 +111,8 @@ func (s *Server) BeginTransaction(ctx context.Context, request *pb.BeginTransact
 }
 
 func (s *Server) Commit(ctx context.Context, request *pb.CommitRequest) (*pb.Response, error) {
+	mykafka.KafkaLock.Lock()
+	defer mykafka.KafkaLock.Unlock()
 	log.Logger.Println("Commit(): start commit")
 	amount := int(request.GetAmount())
 	account_id := int(request.GetAccountId())

@@ -17,12 +17,11 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	fmt.Println(runtime.NumCPU())
 	lis, err := net.Listen("tcp", ":50051")
+	mykafka.InitRecord()
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	go mykafka.Push_query()
-	go mykafka.Modify_map()
 	pb.RegisterTwoPhaseCommitServiceServer(s, &mygrpc.Server{})
 	fmt.Printf("Server is running on port %v\n", lis.Addr())
 	if err := s.Serve(lis); err != nil {
