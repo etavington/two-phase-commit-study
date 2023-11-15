@@ -41,15 +41,18 @@ message UpdateAccountRequest {
 message BeginTransactionRequest {
     int32 account_id = 1;
     int32 amount = 2;
+    string uuid = 3;
 }
 // do the saved operation and released locked account
 message CommitRequest {
     int32 account_id = 1;
     int32 amount = 2;
+    string uuid = 3;
 }
 //do nothing but released locked accoount
 message AbortRequest {
     int32 account_id = 1;
+    string uuid = 2;
 }
 
 
