@@ -19,37 +19,37 @@ message Response {
 }
 // if account has been created, fail
 message CreateAccountRequest {
-    int32 account_id = 2;
+    int32 account_id = 1;
 }
 // if account does not exsist, fail
 message DeleteAccountRequest {
-    int32 account_id = 2;
+    int32 account_id = 1;
 }
 // if account does not exsist, fail
 message ReadAccountRequest {
-    int32 account_id = 2;
+    int32 account_id = 1;
 }
 // set account's balance to the amount and the amonunt must >= 0
 // if account does not exsist, fail
 message UpdateAccountRequest {
-    int32 account_id = 2;
-    int32 amount = 3;
+    int32 account_id = 1;
+    int32 amount = 2;
 }
 //account balance must >= -amount
 //if account does not exsist, fail
 //if there is lock in 2pc, we must save locks in server
 message BeginTransactionRequest {
-    int32 account_id = 2;
-    int32 amount = 3;
+    int32 account_id = 1;
+    int32 amount = 2;
 }
 // do the saved operation and released locked account
 message CommitRequest {
-    int32 account_id = 2;
-    int32 amount = 3;
+    int32 account_id = 1;
+    int32 amount = 2;
 }
 //do nothing but released locked accoount
 message AbortRequest {
-    int32 account_id = 2;
+    int32 account_id = 1;
 }
 
 
