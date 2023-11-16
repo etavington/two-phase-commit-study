@@ -144,7 +144,8 @@ func (s *Server) Reset(ctx context.Context, e *emptypb.Empty) (*pb.Response, err
 	}
 	//log.Logger.Println("Reset(): delete all account")
 	for _, id := range ids {
-		mykafka.DeleteAccount(int(id), int(mykafka.Records.Map[id]))
+		balance, _ := mykafka.Records.Get(id)
+		mykafka.DeleteAccount(int(id), int(balance))
 	}
 	//log.Logger.Println("Reset(): reset successfully")
 	return &pb.Response{Msg: "reset successfully"}, nil
