@@ -1,6 +1,7 @@
 package container
 
 import (
+	"Twopc-cli/logger"
 	"sync"
 )
 
@@ -34,6 +35,26 @@ func (sm *SafeMap) Add(key int32, delta int32) {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 	sm.Map[key] += delta
+	logger.Logger.Println("Add(): ", sm.Map[key])
+}
+
+type SafeBuffer struct {
+	mu     sync.Mutex
+	Buffer []string
+}
+
+func (sb *SafeBuffer) Get() string {
+	sb.mu.Lock()
+	defer sb.mu.Unlock()
+	ret := sb.Buffer[0]
+	sb.Buffer = sb.Buffer[1:]
+	return ret
+}
+func (sb *SafeBuffer) Set(in string) {
+	sb.mu.Lock()
+	defer sb.mu.Unlock()
+	sb.Buffer = append(sb.Buffer, in)
+
 }
 
 type DBlock struct {
@@ -71,7 +92,7 @@ func (db *DBlock) ReleaseLock(uuid string) bool {
 	}
 	db.currend_uuid = ""
 	// db.cv.L.Unlock()
-	db.cv.Broadcast()
+	db.cv.Signal()
 	// fmt.Println("ReleaseLock(): ", db.currend_uuid)
 	return true
 }

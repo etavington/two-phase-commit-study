@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	"Twopc-cli/mykafka"
 	pb "Twopc-cli/twopcserver"
@@ -14,6 +15,8 @@ import (
 type Server struct {
 	pb.UnimplementedTwoPhaseCommitServiceServer
 }
+
+var lock = sync.Mutex{}
 
 func (s *Server) CreateAccount(ctx context.Context, request *pb.CreateAccountRequest) (*pb.Response, error) {
 	account_id := int(request.GetAccountId())
@@ -38,8 +41,8 @@ func (s *Server) CreateAccount(ctx context.Context, request *pb.CreateAccountReq
 	return &pb.Response{Msg: "create account successfully"}, nil
 }
 func (s *Server) ReadAccount(ctx context.Context, request *pb.ReadAccountRequest) (*pb.Response, error) {
-	fmt.Println(request)
-	fmt.Println(request.GetAccountId())
+	// fmt.Println(request)
+	// fmt.Println(request.GetAccountId())
 	account_id := int(request.GetAccountId())
 	//log.Logger.Println("ReadAccount()", "account_id", account_id, ": start read account")
 	balance, ok := mykafka.QueryAccount(account_id)
@@ -93,12 +96,14 @@ func (s *Server) DeleteAccount(ctx context.Context, request *pb.DeleteAccountReq
 }
 
 func (s *Server) BeginTransaction(ctx context.Context, request *pb.BeginTransactionRequest) (*pb.Response, error) {
-	mykafka.KafkaLock.GetLock(request.GetUuid())
+	// mykafka.KafkaLock.GetLock(request.GetUuid())
 	//log.Logger.Println("BeginTransaction(): start begin transaction", request.GetUuid())
+	// lock.Lock()
+	// defer lock.Unlock()
 	amount := int(request.GetAmount())
-	fmt.Println("amount :", amount)
+	// fmt.Println("amount :", amount)
 	account_id := int(request.GetAccountId())
-	fmt.Println("account :", account_id)
+	// fmt.Println("account :", account_id)
 	v, ok := mykafka.QueryAccount(account_id)
 	if !ok {
 		//log.Logger.Println("BeginTransaction(): Account doesn't exist")
@@ -113,8 +118,10 @@ func (s *Server) BeginTransaction(ctx context.Context, request *pb.BeginTransact
 }
 
 func (s *Server) Commit(ctx context.Context, request *pb.CommitRequest) (*pb.Response, error) {
-	defer mykafka.KafkaLock.ReleaseLock(request.GetUuid())
+	// defer mykafka.KafkaLock.ReleaseLock(request.GetUuid())
 	//log.Logger.Println("Commit(): start commit", request.GetUuid())
+	lock.Lock()
+	defer lock.Unlock()
 	amount := int(request.GetAmount())
 	account_id := int(request.GetAccountId())
 	err := mykafka.SendPayment(account_id, amount)
@@ -128,11 +135,11 @@ func (s *Server) Commit(ctx context.Context, request *pb.CommitRequest) (*pb.Res
 }
 func (s *Server) Abort(ctx context.Context, request *pb.AbortRequest) (*pb.Response, error) {
 	//log.Logger.Println("Abort(): start abort")
-	valid := mykafka.KafkaLock.ReleaseLock(request.GetUuid())
-	if !valid {
-		//log.Logger.Println("Abort(): abort failed")
-		return nil, errors.New("abort failed")
-	}
+	// valid := mykafka.KafkaLock.ReleaseLock(request.GetUuid())
+	// if !valid {
+	// 	//log.Logger.Println("Abort(): abort failed")
+	// 	return nil, errors.New("abort failed")
+	// }
 	return &pb.Response{Msg: "abort successfully"}, nil
 }
 

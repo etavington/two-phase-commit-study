@@ -7,5 +7,5 @@ import (
 )
 
 var f, _ = os.OpenFile("2pc.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-var multi = io.MultiWriter(f, os.Stdout)
+var multi = io.Writer(f)
 var Logger = log.New(multi, "2pc ", log.LstdFlags)

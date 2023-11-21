@@ -6,6 +6,7 @@ import (
 
 	safe "Twopc-cli/container"
 	log "Twopc-cli/logger"
+	"time"
 
 	"github.com/thmeitz/ksqldb-go"
 	knet "github.com/thmeitz/ksqldb-go/net"
@@ -47,21 +48,39 @@ func QueryAccount(id int) (int32, bool) {
 	// return query(id)
 }
 
+var buffer = safe.SafeBuffer{Buffer: make([]string, 0, 10000)}
+
+func BackgroundSendPayment() {
+	for {
+		if len(buffer.Buffer) > 0 {
+			stmt := buffer.Get()
+			_, err := ksqlcon.Execute(context.Background(), ksqldb.ExecOptions{KSql: stmt})
+			if err != nil {
+				log.Logger.Println("BackgroundSendPayment ksqlcon.Execute: ", err)
+			} else {
+				// log.Logger.Println("SendPayment(): response", resp)
+			}
+		} else {
+			time.Sleep(time.Second)
+		}
+	}
+}
 func SendPayment(id int, amount int) error {
 	stmt, err := ksqldb.QueryBuilder("INSERT INTO PAYMENT3 VALUES(?,?);", id, amount)
 	if err != nil {
 		// log.Logger.Println("SendPaymenta() ksqldb.QueryBuilder: error", err)
 		return err
 	}
-	go func(con *ksqldb.KsqldbClient, ctx context.Context, stmt *string) {
-		_, err := ksqlcon.Execute(ctx, ksqldb.ExecOptions{KSql: *stmt})
-		if err != nil {
-			log.Logger.Println("SendPaymenta() ksqlcon.Execute: error ", err)
-		} else {
-			// log.Logger.Println("SendPayment(): response", resp)
-		}
-	}(&ksqlcon, context.TODO(), stmt)
+	buffer.Set(*stmt)
 	Records.Add(int32(id), int32(amount))
+
+	// _, err = ksqlcon.Execute(context.Background(), ksqldb.ExecOptions{KSql: *stmt})
+	// if err != nil {
+	// 	log.Logger.Println("SendPaymenta() ksqlcon.Execute: error ", err)
+	// } else {
+	// 	// log.Logger.Println("SendPayment(): response", resp)
+	// }
+
 	return nil
 }
 
