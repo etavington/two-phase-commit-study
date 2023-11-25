@@ -18,6 +18,7 @@ func main() {
 	fmt.Println(runtime.NumCPU())
 	lis, err := net.Listen("tcp", ":50051")
 	mykafka.InitRecord()
+	go mykafka.BackgroundSendPayment()
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

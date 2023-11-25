@@ -96,3 +96,7 @@ func (db *DBlock) ReleaseLock(uuid string) bool {
 	// fmt.Println("ReleaseLock(): ", db.currend_uuid)
 	return true
 }
+
+type Locks struct {
+	Mus [10000]sync.Mutex
+}
