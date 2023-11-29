@@ -118,7 +118,10 @@ func InitRecord() {
 	for _, r := range resp {
 		id := r[0].(float64)
 		balance := r[1].(float64)
-		Records.Set(int32(id), int32(balance))
+		// for dblock
+		// Records.Set(int32(id), int32(balance))
+		// for account lock
+		Records.InitMap2(int32(id), int32(balance))
 	}
 	// log.Logger.Println("InitRecord respones: ", resp)
 }
