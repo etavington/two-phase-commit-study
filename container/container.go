@@ -21,16 +21,16 @@ func (sm *SafeMap2) Get(key int32) (int32, bool) {
 func (sm *SafeMap2) Set(key int32, value int32) {
 	sm.M[key].mu.Lock()
 	defer sm.M[key].mu.Unlock()
-	tmp := sm.M[key]
-	tmp.value = value
-	sm.M[key] = tmp
+	tmp := sm.M[key].value
+	tmp = value
+	sm.M[key].value = tmp
 }
 func (sm *SafeMap2) Add(key int32, delta int32) {
 	sm.M[key].mu.Lock()
 	defer sm.M[key].mu.Unlock()
-	tmp := sm.M[key]
-	tmp.value += delta
-	sm.M[key] = tmp
+	tmp := sm.M[key].value
+	tmp += delta
+	sm.M[key].value = tmp
 }
 func (sm *SafeMap2) InitMap2(key int32, value int32) {
 	sm.M[key] = &SafeEntry{value: value}
