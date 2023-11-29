@@ -5,6 +5,38 @@ import (
 	"sync"
 )
 
+type SafeEntry struct {
+	mu    sync.Mutex
+	value int32
+}
+type SafeMap2 struct {
+	M map[int32]*SafeEntry
+}
+
+func (sm *SafeMap2) Get(key int32) (int32, bool) {
+	sm.M[key].mu.Lock()
+	defer sm.M[key].mu.Unlock()
+	return sm.M[key].value, true
+}
+func (sm *SafeMap2) Set(key int32, value int32) {
+	sm.M[key].mu.Lock()
+	defer sm.M[key].mu.Unlock()
+	tmp := sm.M[key]
+	tmp.value = value
+	sm.M[key] = tmp
+}
+func (sm *SafeMap2) Add(key int32, delta int32) {
+	sm.M[key].mu.Lock()
+	defer sm.M[key].mu.Unlock()
+	tmp := sm.M[key]
+	tmp.value += delta
+	sm.M[key] = tmp
+}
+func (sm *SafeMap2) InitMap2(key int32, value int32) {
+	sm.M[key] = &SafeEntry{value: value}
+
+}
+
 type SafeMap struct {
 	mu  sync.RWMutex
 	Map map[int32]int32

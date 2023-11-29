@@ -15,14 +15,16 @@ import (
 // remember to change postfix of table/stream
 // BALANCE and PAYMENT
 var ksqlUrl = "http://10.140.0.4:8088"
-var Records = safe.SafeMap{Map: make(map[int32]int32)}
+
+// var Records = safe.SafeMap{Map: make(map[int32]int32)}
+var Records = safe.SafeMap2{M: make(map[int32]*safe.SafeEntry)}
 var op = knet.Options{BaseUrl: ksqlUrl,
 	AllowHTTP: true}
 var ksqlcon, _ = ksqldb.NewClientWithOptions(op)
 var KafkaLock = safe.InitDBlock()
 
 func query(id int) (int32, bool) {
-	stmnt, err := ksqldb.QueryBuilder("SELECT balance FROM BALANCE1 WHERE id=?;", id)
+	stmnt, err := ksqldb.QueryBuilder("SELECT balance FROM BALANCE3 WHERE id=?;", id)
 	if err != nil {
 		log.Logger.Println("query ksqldb.QueryBuilder: ", err)
 		return 0, false
@@ -66,7 +68,7 @@ func BackgroundSendPayment() {
 	}
 }
 func SendPayment(id int, amount int) error {
-	stmt, err := ksqldb.QueryBuilder("INSERT INTO PAYMENT1 VALUES(?,?);", id, amount)
+	stmt, err := ksqldb.QueryBuilder("INSERT INTO PAYMENT3 VALUES(?,?);", id, amount)
 	if err != nil {
 		// log.Logger.Println("SendPaymenta() ksqldb.QueryBuilder: error", err)
 		return err
@@ -85,7 +87,7 @@ func SendPayment(id int, amount int) error {
 }
 
 func DeleteAccount(id int, balance int) error {
-	stmt, err := ksqldb.QueryBuilder("INSERT INTO BALANCE1 VALUES(?,null);", id)
+	stmt, err := ksqldb.QueryBuilder("INSERT INTO BALANCE3 VALUES(?,null);", id)
 	if err != nil {
 		log.Logger.Println("DeleteAccount ksqldb.QueryBuilder: ", err)
 		return err
@@ -101,7 +103,7 @@ func DeleteAccount(id int, balance int) error {
 }
 
 func InitRecord() {
-	stmnt, err := ksqldb.QueryBuilder("SELECT * FROM BALANCE1;")
+	stmnt, err := ksqldb.QueryBuilder("SELECT * FROM BALANCE3;")
 	if err != nil {
 		log.Logger.Println("InitRecord ksqldb.QueryBuilder: ", err)
 		return
