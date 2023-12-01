@@ -31,6 +31,7 @@ func (sm *SafeMap2) Add(key int32, delta int32) {
 	tmp := sm.M[key].value
 	tmp += delta
 	sm.M[key].value = tmp
+	logger.Logger.Println("Add(): ", tmp)
 }
 func (sm *SafeMap2) InitMap2(key int32, value int32) {
 	sm.M[key] = &SafeEntry{value: value}

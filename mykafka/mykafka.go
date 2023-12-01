@@ -24,7 +24,7 @@ var ksqlcon, _ = ksqldb.NewClientWithOptions(op)
 var KafkaLock = safe.InitDBlock()
 
 func query(id int) (int32, bool) {
-	stmnt, err := ksqldb.QueryBuilder("SELECT balance FROM BALANCE3 WHERE id=?;", id)
+	stmnt, err := ksqldb.QueryBuilder("SELECT balance FROM BALANCE2 WHERE id=?;", id)
 	if err != nil {
 		log.Logger.Println("query ksqldb.QueryBuilder: ", err)
 		return 0, false
@@ -68,7 +68,7 @@ func BackgroundSendPayment() {
 	}
 }
 func SendPayment(id int, amount int) error {
-	stmt, err := ksqldb.QueryBuilder("INSERT INTO PAYMENT3 VALUES(?,?);", id, amount)
+	stmt, err := ksqldb.QueryBuilder("INSERT INTO PAYMENT2 VALUES(?,?);", id, amount)
 	if err != nil {
 		// log.Logger.Println("SendPaymenta() ksqldb.QueryBuilder: error", err)
 		return err
@@ -87,7 +87,7 @@ func SendPayment(id int, amount int) error {
 }
 
 func DeleteAccount(id int, balance int) error {
-	stmt, err := ksqldb.QueryBuilder("INSERT INTO BALANCE3 VALUES(?,null);", id)
+	stmt, err := ksqldb.QueryBuilder("INSERT INTO BALANCE2 VALUES(?,null);", id)
 	if err != nil {
 		log.Logger.Println("DeleteAccount ksqldb.QueryBuilder: ", err)
 		return err
@@ -103,7 +103,7 @@ func DeleteAccount(id int, balance int) error {
 }
 
 func InitRecord() {
-	stmnt, err := ksqldb.QueryBuilder("SELECT * FROM BALANCE3;")
+	stmnt, err := ksqldb.QueryBuilder("SELECT * FROM BALANCE2;")
 	if err != nil {
 		log.Logger.Println("InitRecord ksqldb.QueryBuilder: ", err)
 		return
