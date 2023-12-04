@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"sync"
 
-	"Twopc-cli/container"
 	"Twopc-cli/mykafka"
 	pb "Twopc-cli/twopcserver"
 
@@ -18,7 +17,8 @@ type Server struct {
 }
 
 var lock = sync.Mutex{}
-var locks = container.Locks{}
+
+// var locks = container.Locks{}
 
 func (s *Server) CreateAccount(ctx context.Context, request *pb.CreateAccountRequest) (*pb.Response, error) {
 	account_id := int(request.GetAccountId())
@@ -102,6 +102,7 @@ func (s *Server) BeginTransaction(ctx context.Context, request *pb.BeginTransact
 	//log.Logger.Println("BeginTransaction(): start begin transaction", request.GetUuid())
 	// lock.Lock()
 	// defer lock.Unlock()
+	lock.Lock()
 	amount := int(request.GetAmount())
 	// fmt.Println("amount :", amount)
 	account_id := int(request.GetAccountId())
@@ -122,17 +123,18 @@ func (s *Server) BeginTransaction(ctx context.Context, request *pb.BeginTransact
 func (s *Server) Commit(ctx context.Context, request *pb.CommitRequest) (*pb.Response, error) {
 	// defer mykafka.KafkaLock.ReleaseLock(request.GetUuid())
 	//log.Logger.Println("Commit(): start commit", request.GetUuid())
-	// lock.Lock()
-	// defer lock.Unlock()
+
+	defer lock.Unlock()
 	amount := int(request.GetAmount())
 	account_id := int(request.GetAccountId())
-	locks.Mus[account_id-1].Lock()
-	defer locks.Mus[account_id-1].Unlock()
+	// locks.Mus[account_id-1].Lock()
+	// defer locks.Mus[account_id-1].Unlock()
 	err := mykafka.SendPayment(account_id, amount)
 	if err != nil {
 		//log.Logger.Println("Commit(): ", err)
 		return nil, err
 	}
+
 	//log.Logger.Print("Commit(): commit successfully")
 
 	return &pb.Response{Msg: "commit successfully"}, nil
@@ -144,6 +146,7 @@ func (s *Server) Abort(ctx context.Context, request *pb.AbortRequest) (*pb.Respo
 	// 	//log.Logger.Println("Abort(): abort failed")
 	// 	return nil, errors.New("abort failed")
 	// }
+	defer lock.Unlock()
 	return &pb.Response{Msg: "abort successfully"}, nil
 }
 
