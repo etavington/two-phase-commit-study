@@ -69,9 +69,11 @@ func (s *Server) DeleteAccount(ctx context.Context, request *pb.DeleteAccountReq
 func (s *Server) BeginTransaction(ctx context.Context, request *pb.BeginTransactionRequest) (*pb.Response, error) {
 	// mykafka.KafkaLock.GetLock(request.GetUuid())
 	lock.Lock()
-	defer lock.Unlock()
+	// defer lock.Unlock()
 	amount := int(request.GetAmount())
 	account_id := int(request.GetAccountId())
+	// locks.Mus[account_id-1].Lock()
+	// defer locks.Mus[account_id-1].Unlock()
 	v, ok := mykafka.QueryAccount(account_id)
 	if !ok {
 		return nil, errors.New("account doesn't exist")
@@ -84,7 +86,7 @@ func (s *Server) BeginTransaction(ctx context.Context, request *pb.BeginTransact
 
 func (s *Server) Commit(ctx context.Context, request *pb.CommitRequest) (*pb.Response, error) {
 	// defer mykafka.KafkaLock.ReleaseLock(request.GetUuid())
-	lock.Lock()
+	// lock.Lock()
 	defer lock.Unlock()
 	amount := int(request.GetAmount())
 	account_id := int(request.GetAccountId())
@@ -100,8 +102,10 @@ func (s *Server) Commit(ctx context.Context, request *pb.CommitRequest) (*pb.Res
 	return &pb.Response{Msg: "commit successfully"}, nil
 }
 func (s *Server) Abort(ctx context.Context, request *pb.AbortRequest) (*pb.Response, error) {
-	lock.Lock()
+	// lock.Lock()
 	defer lock.Unlock()
+	// account_id := int(request.GetAccountId())
+	// defer locks.Mus[account_id-1].Unlock()
 	return &pb.Response{Msg: "abort successfully"}, nil
 }
 
