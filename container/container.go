@@ -5,6 +5,13 @@ import (
 	"sync"
 )
 
+type CouchDBAccount struct {
+	Id        string `json:"_id,omitempty"`
+	Rev       string `json:"_rev,omitempty"`
+	AccountId int32  `json:"account_id,omitempty"`
+	Deposit   int32  `json:"deposit,omitempty"`
+}
+
 type SafeEntry struct {
 	mu    sync.Mutex
 	value int32
@@ -73,17 +80,22 @@ func (sm *SafeMap) Add(key int32, delta int32) {
 
 type SafeBuffer struct {
 	mu     sync.Mutex
-	Buffer []string
+	Buffer []CacheInfo
 }
 
-func (sb *SafeBuffer) Get() string {
+type CacheInfo struct {
+	Id      string
+	Account CouchDBAccount
+}
+
+func (sb *SafeBuffer) Get() CacheInfo {
 	sb.mu.Lock()
 	defer sb.mu.Unlock()
 	ret := sb.Buffer[0]
 	sb.Buffer = sb.Buffer[1:]
 	return ret
 }
-func (sb *SafeBuffer) Set(in string) {
+func (sb *SafeBuffer) Set(in CacheInfo) {
 	sb.mu.Lock()
 	defer sb.mu.Unlock()
 	sb.Buffer = append(sb.Buffer, in)

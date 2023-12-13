@@ -1,49 +1,51 @@
 package mykafka
 
 import (
-	"context"
-	"fmt"
-
-	safe "Twopc-cli/container"
-	log "Twopc-cli/logger"
 	"time"
 
-	"github.com/thmeitz/ksqldb-go"
-	knet "github.com/thmeitz/ksqldb-go/net"
+	_ "github.com/go-kivik/couchdb/v3"
+	"github.com/go-kivik/kivik/v3"
+
+	//"sync"
+	"context"
+	//"math/rand"
+	safe "Twopc-cli/container"
+	"fmt"
 )
 
-//fuck
-// remember to change postfix of table/stream
-// BALANCE and PAYMENT
-var ksqlUrl = "http://10.140.0.4:8088"
+type CouchDBAccount struct {
+	Id        string `json:"_id,omitempty"`
+	Rev       string `json:"_rev,omitempty"`
+	AccountId int32  `json:"account_id,omitempty"`
+	Deposit   int32  `json:"deposit,omitempty"`
+}
 
 var Records = safe.SafeMap{Map: make(map[int32]int32)}
 
 // var Records = safe.SafeMap2{M: make(map[int32]*safe.SafeEntry)}
-var op = knet.Options{BaseUrl: ksqlUrl,
-	AllowHTTP: true}
-var ksqlcon, _ = ksqldb.NewClientWithOptions(op)
-var KafkaLock = safe.InitDBlock()
+
+var client = CreatekivikClient()
+
+func CreatekivikClient() *kivik.Client {
+	client, err := kivik.New("couch", "http://admin:t102260424@34.80.195.25:5984")
+	//改成http://admin:t102260424@http://34.80.195.25:5984
+	if err != nil {
+		panic(err)
+	}
+	return client
+}
 
 func query(id int) (int32, bool) {
-	stmnt, err := ksqldb.QueryBuilder("SELECT balance FROM BALANCE WHERE id=?;", id)
-	if err != nil {
-		log.Logger.Println("query ksqldb.QueryBuilder: ", err)
-		return 0, false
+	//client :=CreatekivikClient()
+	//defer client.Close(context.Background())
+	db := client.DB(context.TODO(), "bank1")
+	var account CouchDBAccount
+	account, err1 := FindAccount(int32(id), client, db)
+	if err1 != nil {
+		return -1, false
 	}
-	ctx := context.TODO()
-	qOpts := &ksqldb.QueryOptions{Sql: *stmnt}
-	_, resp, err := ksqlcon.Pull(ctx, *qOpts)
-	if err != nil {
-		log.Logger.Println("query ksqlcon.Execute: ", err)
-		return 0, false
-	}
-	fmt.Println("query respones: ", resp)
-	if len(resp) == 0 {
-		return 0, false
-	}
-	balance := resp[0][0].(float64)
-	return int32(balance), true
+
+	return account.Deposit, true
 
 }
 
@@ -52,78 +54,119 @@ func QueryAccount(id int) (int32, bool) {
 	// return query(id)
 }
 
-var buffer = safe.SafeBuffer{Buffer: make([]string, 0, 10000)}
+var buffer = safe.SafeBuffer{Buffer: make([]safe.CacheInfo, 0, 10000)}
 
 func BackgroundSendPayment() {
+	db := client.DB(context.TODO(), "bank1")
 	for {
 		if len(buffer.Buffer) > 0 {
 			stmt := buffer.Get()
-			_, err := ksqlcon.Execute(context.Background(), ksqldb.ExecOptions{KSql: stmt})
-			if err != nil {
-				log.Logger.Println("BackgroundSendPayment ksqlcon.Execute: ", err)
-			} else {
-				// log.Logger.Println("SendPayment(): response", resp)
+			_, err2 := db.Put(context.TODO(), stmt.Id, stmt.Account)
+			if err2 != nil {
+				fmt.Println(err2)
 			}
+			//account.Rev = newRev
+
 		} else {
 			time.Sleep(time.Second)
 		}
 	}
+
 }
+
+func FindAccount(id int32, client *kivik.Client, db *kivik.DB) (CouchDBAccount, error) {
+	query := map[string]interface{}{
+		"selector": map[string]interface{}{
+			"account_id": id,
+		},
+	}
+
+	rows, err1 := db.Find(context.TODO(), query)
+	if err1 != nil {
+		fmt.Printf("Error executing query: %v\n", err1)
+	}
+	defer rows.Close()
+	var account CouchDBAccount
+	for rows.Next() {
+		if err2 := rows.ScanDoc(&account); err2 != nil {
+			fmt.Printf("Error scanning document: %v", err2)
+		}
+	}
+	return account, nil
+}
+
 func SendPayment(id int, amount int) error {
-	stmt, err := ksqldb.QueryBuilder("INSERT INTO PAYMENT VALUES(?,?);", id, amount)
-	if err != nil {
-		// log.Logger.Println("SendPaymenta() ksqldb.QueryBuilder: error", err)
-		return err
+	//client :=CreatekivikClient()
+	//defer client.Close(context.Background())
+	db := client.DB(context.TODO(), "bank1")
+	var account CouchDBAccount
+	account, err1 := FindAccount(int32(id), client, db)
+	if err1 != nil {
+		return err1
 	}
-	// buffer.Set(*stmt)
-	// Records.Add(int32(id), int32(amount))
-
-	_, err = ksqlcon.Execute(context.Background(), ksqldb.ExecOptions{KSql: *stmt})
-	if err != nil {
-		log.Logger.Println("SendPaymenta() ksqlcon.Execute: error ", err)
-	} else {
-		// log.Logger.Println("SendPayment(): response", resp)
+	account.Rev = account.Rev // Must be set
+	account.Deposit = int32(amount)
+	newRev, err2 := db.Put(context.TODO(), account.Id, account)
+	if err2 != nil {
+		return err2
 	}
-
+	account.Rev = newRev
 	return nil
 }
 
 func DeleteAccount(id int, balance int) error {
-	stmt, err := ksqldb.QueryBuilder("INSERT INTO BALANCE VALUES(?,null);", id)
-	if err != nil {
-		log.Logger.Println("DeleteAccount ksqldb.QueryBuilder: ", err)
-		return err
-	}
-	ctx := context.TODO()
-	resp, err := ksqlcon.Execute(ctx, ksqldb.ExecOptions{KSql: *stmt})
-	if err != nil {
-		log.Logger.Println("DeleteAccount ksqlcon.Execute: ", err)
-		return err
-	}
-	log.Logger.Println("DeleteAccount respones: ", resp)
+	/*var account CouchDBAccount
+	  //client :=CreatekivikClient()
+	  //defer client.Close(context.Background())
+	  db := client.DB(context.TODO(),"bank1")
+	  account ,err1:= FindAccount(int32(id),client,db)
+	  if err1 !=nil{
+	    fmt.Errorf("Error deleting document: %v", err1)
+	    return "Error deleting document", err1
+	  }
+	  rev, err2 := db.Delete(context.TODO(),account.Id,account.Rev)
+	  if err2 != nil {
+	    return "Error deleting document:",err2
+	  }
+	  if rev=="0"{
+	  }*/
 	return nil
 }
 
 func InitRecord() {
-	stmnt, err := ksqldb.QueryBuilder("SELECT * FROM BALANCE;")
-	if err != nil {
-		log.Logger.Println("InitRecord ksqldb.QueryBuilder: ", err)
-		return
+	query := map[string]interface{}{
+		"selector": map[string]interface{}{},
+		"limit":    10000,
 	}
-	ctx := context.TODO()
-	qOpts := &ksqldb.QueryOptions{Sql: *stmnt}
-	_, resp, err := ksqlcon.Pull(ctx, *qOpts)
-	if err != nil {
-		log.Logger.Println("InitRecord ksqlcon.Execute: ", err)
-		return
+
+	db := client.DB(context.TODO(), "bank1")
+	rows, err1 := db.Find(context.TODO(), query)
+	if err1 != nil {
+		fmt.Printf("Error executing query: %v\n", err1)
 	}
-	for _, r := range resp {
+	defer rows.Close()
+	var account CouchDBAccount
+
+	for rows.Next() {
+		if err2 := rows.ScanDoc(&account); err2 != nil {
+			fmt.Printf("Error scanning document: %v", err2)
+		}
+		id := account.AccountId
+		balance := account.Deposit
+		// for dblock
+		Records.Set(int32(id), int32(balance))
+		a, b := Records.Get(int32(id))
+		fmt.Println(id, a, b)
+		// for account lock
+		// Records.InitMap2(int32(id), int32(balance))
+	}
+	/*	for _, r := range resp {
 		id := r[0].(float64)
 		balance := r[1].(float64)
 		// for dblock
 		Records.Set(int32(id), int32(balance))
 		// for account lock
 		// Records.InitMap2(int32(id), int32(balance))
-	}
+	} */
 	// log.Logger.Println("InitRecord respones: ", resp)
 }

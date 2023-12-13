@@ -68,6 +68,7 @@ func (s *Server) DeleteAccount(ctx context.Context, request *pb.DeleteAccountReq
 
 func (s *Server) BeginTransaction(ctx context.Context, request *pb.BeginTransactionRequest) (*pb.Response, error) {
 	// mykafka.KafkaLock.GetLock(request.GetUuid())
+	fmt.Println("DFS")
 	lock.Lock()
 	// defer lock.Unlock()
 	amount := int(request.GetAmount())
@@ -75,6 +76,7 @@ func (s *Server) BeginTransaction(ctx context.Context, request *pb.BeginTransact
 	// locks.Mus[account_id-1].Lock()
 	// defer locks.Mus[account_id-1].Unlock()
 	v, ok := mykafka.QueryAccount(account_id)
+	fmt.Println(v, ok)
 	if !ok {
 		return nil, errors.New("account doesn't exist")
 	} else if v < -int32(amount) {
