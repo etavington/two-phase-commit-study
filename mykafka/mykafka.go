@@ -12,6 +12,7 @@ import (
 	knet "github.com/thmeitz/ksqldb-go/net"
 )
 
+//fuck
 // remember to change postfix of table/stream
 // BALANCE and PAYMENT
 var ksqlUrl = "http://10.140.0.4:8088"
