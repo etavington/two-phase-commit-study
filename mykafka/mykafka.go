@@ -9,6 +9,7 @@ import (
 	//"sync"
 	"context"
 	//"math/rand"
+
 	safe "Twopc-cli/container"
 	"fmt"
 )
@@ -98,19 +99,31 @@ func FindAccount(id int32, client *kivik.Client, db *kivik.DB) (CouchDBAccount, 
 func SendPayment(id int, amount int) error {
 	//client :=CreatekivikClient()
 	//defer client.Close(context.Background())
-	db := client.DB(context.TODO(), "bank1")
-	var account CouchDBAccount
-	account, err1 := FindAccount(int32(id), client, db)
-	if err1 != nil {
-		return err1
-	}
-	account.Rev = account.Rev // Must be set
-	account.Deposit = int32(amount)
-	newRev, err2 := db.Put(context.TODO(), account.Id, account)
-	if err2 != nil {
-		return err2
-	}
-	account.Rev = newRev
+	// db := client.DB(context.TODO(), "bank1")
+	// var account CouchDBAccount
+	// account, err1 := FindAccount(int32(id), client, db)
+	// if err1 != nil {
+	// 	return err1
+	// }
+	// account.Rev = account.Rev // Must be set
+	// account.Deposit += int32(amount)
+	// newRev, err2 := db.Put(context.TODO(), account.Id, account)
+	// if err2 != nil {
+	// 	return err2
+	// }
+	// account.Rev = newRev
+	// var account2 container.CouchDBAccount
+	// account2.Id = account.Id
+	// account2.AccountId = account.AccountId
+	// account2.Rev = account.Rev
+	// account2.Deposit = account.Deposit
+	// var info safe.CacheInfo
+	// info = safe.CacheInfo{
+	// 	Id:      account.Id,
+	// 	Account: account2,
+	// }
+	// buffer.Set(info)
+	Records.Add(int32(id), int32(amount))
 	return nil
 }
 
@@ -155,18 +168,18 @@ func InitRecord() {
 		balance := account.Deposit
 		// for dblock
 		Records.Set(int32(id), int32(balance))
-		a, b := Records.Get(int32(id))
-		fmt.Println(id, a, b)
+		//a, b := Records.Get(int32(id))
+
 		// for account lock
 		// Records.InitMap2(int32(id), int32(balance))
 	}
-	/*	for _, r := range resp {
-		id := r[0].(float64)
-		balance := r[1].(float64)
-		// for dblock
-		Records.Set(int32(id), int32(balance))
-		// for account lock
-		// Records.InitMap2(int32(id), int32(balance))
-	} */
+	// for _, r := range resp {
+	// 	id := r[0].(float64)
+	// 	balance := r[1].(float64)
+	// 	// for dblock
+	// 	Records.Set(int32(id), int32(balance))
+	// 	// for account lock
+	// 	// Records.InitMap2(int32(id), int32(balance))
+	// }
 	// log.Logger.Println("InitRecord respones: ", resp)
 }
